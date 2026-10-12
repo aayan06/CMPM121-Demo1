@@ -3,6 +3,9 @@
 // @deno-types="./asset-url.d.ts"
 import tileUrl from "./assets/tile.svg?no-inline";
 
+// example theme of the game (Magic Tiles)
+let numTiles: number = 0;
+
 const app = document.querySelector<HTMLElement>("#app")!;
 
 const heading = document.createElement("h1");
@@ -14,7 +17,15 @@ image.alt = "A teal tile with a cream circle";
 image.width = 96;
 image.height = 96;
 
-const message = document.createElement("p");
-message.textContent = "Your project starts here.";
+// create a button
+const clickButton = document.createElement("button");
+clickButton.textContent = "EXAMPLE BUTTON";
+clickButton.style.padding = "10px";
+clickButton.style.fontSize = "18px";
+clickButton.style.margin = "10px 0";
 
-app.append(heading, image, message);
+clickButton.addEventListener("click", () => {
+  numTiles++;
+});
+
+app.append(heading, image, clickButton);
