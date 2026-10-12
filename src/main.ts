@@ -5,7 +5,8 @@ import tileUrl from "./assets/tile.svg?no-inline";
 
 // example theme of the game (Magic Tiles)
 let numTiles: number = 0;
-let growthRate: number = 0;
+const growthRate: number = 0;
+let lastTime: number = performance.now();
 
 const app = document.querySelector<HTMLElement>("#app")!;
 
@@ -47,4 +48,18 @@ function updateUI() {
   rateDisplay.textContent = `${growthRate} Tiles/sec`;
 }
 
+function gameLoop(timestamp: number) {
+  const deltaSeconds = (timestamp - lastTime) / 1000;
+  lastTime = timestamp;
+
+  if (growthRate > 0) {
+    numTiles += growthRate * deltaSeconds;
+    updateUI();
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+// to render and start the loop
 updateUI();
+requestAnimationFrame(gameLoop);
