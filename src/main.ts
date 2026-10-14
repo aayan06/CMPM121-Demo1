@@ -8,10 +8,10 @@ import stoneUrl from "./assets/stone.png?no-inline";
 import ironUrl from "./assets/iron.png?no-inline";
 // @deno-types="./asset-url.d.ts"
 import diamondUrl from "./assets/diamond.png?no-inline";
-//  @deno-types="./asset-url.d.ts"
+// @deno-types="./asset-url.d.ts"
 import rubyUrl from "./assets/ruby.png?no-inline";
 
-// game state
+// Game state
 let numTiles: number = 0;
 let totalOreThisLife: number = 0;
 let souls: number = 0;
@@ -89,7 +89,7 @@ const pickaxeClasses: PickaxeClass[] = [
     soulMult: 1,
   },
   {
-    name: "Cooper Pick",
+    name: "Copper Pick",
     upside: "+50% click yield",
     downside: "-10% idle production",
     unlockReincarnations: 1,
@@ -219,12 +219,49 @@ const soulPerks: SoulPerk[] = [
   },
 ];
 
+// Add dark cave theme and button styles
+const style = document.createElement("style");
+style.textContent = `
+  body {
+    margin: 0;
+    background-color: #020202;
+    color: #ffffff;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  img {
+    image-rendering: pixelated;
+  }
+  button {
+    background-color: #1f242d;
+    color: #ffffff;
+    border: 1px solid #404142;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, transform 0.05s;
+  }
+  button:hover:not(:disabled) {
+    background-color: #2b323f;
+    border-color: #345379;
+  }
+  button:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+`;
+document.head.append(style);
+
 function spawnFallingOre(url: string) {
   const ore = document.createElement("img");
   ore.src = url;
   ore.width = 48;
   ore.style.position = "fixed";
   ore.style.left = `${Math.random() * 90}vw`;
+  ore.style.pointerEvents = "none";
   document.body.append(ore);
 
   ore.animate([{ top: "0" }, { top: "100vh" }], 3000).onfinish = () => {
@@ -238,40 +275,47 @@ app.style.display = "flex";
 app.style.flexDirection = "column";
 app.style.alignItems = "center";
 app.style.justifyContent = "center";
+app.style.paddingBottom = "40px";
 
-// create counter and rate display
+// create counter, rate, and prestige displays
 const counterDisplay = document.createElement("div");
-counterDisplay.style.fontSize = "24px";
-counterDisplay.style.margin = "10px 0";
+counterDisplay.style.fontSize = "28px";
+counterDisplay.style.fontWeight = "bold";
+counterDisplay.style.color = "#ee5e0b";
+counterDisplay.style.margin = "10px 0 4px 0";
 counterDisplay.textContent = "0 Ores";
 
 const rateDisplay = document.createElement("div");
+rateDisplay.style.color = "#9ca3af";
 rateDisplay.textContent = "0 Ores/sec";
 
-// soul and reincarnation UI
 const soulDisplay = document.createElement("div");
-soulDisplay.style.marginTop = "5px";
+soulDisplay.style.marginTop = "8px";
 soulDisplay.style.fontWeight = "bold";
+soulDisplay.style.color = "#219db3";
 
 const classDisplay = document.createElement("div");
 classDisplay.style.marginTop = "5px";
+classDisplay.style.color = "#d1d5db";
 
 // display title
 const heading = document.createElement("h1");
 heading.textContent = "Mining Clicker";
 
+// make the ore image act as the clickable button
 const image = document.createElement("img");
 image.src = stoneUrl;
 image.alt = "A grey stone ore";
-image.width = 96;
-image.height = 96;
+image.width = 112;
+image.height = 112;
 image.style.cursor = "pointer";
 image.style.userSelect = "none";
 
-function getCLickYield(): number {
+function getClickYield(): number {
   const eternalSwingMult = 1 + soulPerks[0].level * 0.2;
   const depthMult = 1 + soulPerks[4].level * 0.25;
   let amount = 1 * currentClass.clickMult * eternalSwingMult * depthMult;
+
   if (Math.random() < currentClass.rareChance) {
     amount *= 10;
   }
@@ -287,15 +331,17 @@ function getEffectiveIdleRate(): number {
   return growthRate * currentClass.idleMult * endlessPatienceMult * depthMult;
 }
 
-// add image as a button
 image.addEventListener("click", () => {
-  const gained = getCLickYield();
+  const gained = getClickYield();
   numTiles += gained;
   totalOreThisLife += gained;
   spawnFallingOre(image.src);
-  image.animate([{ transform: "scale(1)" }, { transform: "scale(0.9)" }, {
-    transform: "scale(1)",
-  }], 100);
+  image.animate(
+    [{ transform: "scale(1)" }, { transform: "scale(0.9)" }, {
+      transform: "scale(1)",
+    }],
+    100,
+  );
   updateUI();
 });
 
@@ -311,12 +357,14 @@ function calculateCost(item: Item): number {
   return item.baseCost * Math.pow(1.15, item.owned);
 }
 
-// fucntion for getting souls on reincarnation
+// function for calculating souls on reincarnate
 function calculatePendingSouls(): number {
-  return Math.floor(Math.sqrt(totalOreThisLife / 1000));
+  const baseSouls = Math.floor(Math.sqrt(totalOreThisLife / 1000));
+  const soulMagnetMult = 1 + soulPerks[3].level * 0.2;
+  return Math.floor(baseSouls * currentClass.soulMult * soulMagnetMult);
 }
 
-// function for getting soul perk costs
+// function for calculating soul perk costs
 function calculatePerkCost(perk: SoulPerk): number {
   return Math.round(5 * Math.pow(1.4, perk.level));
 }
@@ -326,7 +374,6 @@ for (let i = 0; i < availableItems.length; i++) {
   const item = availableItems[i];
   const button = document.createElement("button");
   button.id = `upgrade-${i}`;
-  button.style.padding = "8px";
   button.style.textAlign = "left";
 
   button.addEventListener("click", () => {
@@ -342,17 +389,17 @@ for (let i = 0; i < availableItems.length; i++) {
   upgradesContainer.append(button);
 }
 
-// reincarnate button
+// create reincarnate button
 const reincarnateButton = document.createElement("button");
 reincarnateButton.style.marginTop = "20px";
-reincarnateButton.style.padding = "10px";
+reincarnateButton.style.borderColor = "#219db3";
 
 reincarnateButton.addEventListener("click", () => {
   const pendingSouls = calculatePendingSouls();
   souls += pendingSouls;
   reincarnationCount++;
 
-  // reset the progress
+  // reset current life progress (apply Starting Fortune & Second Chance perks)
   numTiles = soulPerks[2].level * 50;
   totalOreThisLife = 0;
   growthRate = 0;
@@ -362,10 +409,11 @@ reincarnateButton.addEventListener("click", () => {
     availableItems[i].owned = Math.floor(availableItems[i].owned * keepRatio);
     growthRate += availableItems[i].owned * availableItems[i].rate;
   }
+
   updateUI();
 });
 
-// pickaxe class selection containers
+// create pickaxe class selection container
 const classesHeading = document.createElement("h3");
 classesHeading.textContent = "Pickaxe Classes";
 classesHeading.style.marginBottom = "5px";
@@ -379,7 +427,6 @@ for (let i = 0; i < pickaxeClasses.length; i++) {
   const pickClass = pickaxeClasses[i];
   const button = document.createElement("button");
   button.id = `class-${i}`;
-  button.style.padding = "6px";
   button.style.textAlign = "left";
 
   button.addEventListener("click", () => {
@@ -388,10 +435,11 @@ for (let i = 0; i < pickaxeClasses.length; i++) {
       updateUI();
     }
   });
+
   classesContainer.append(button);
 }
 
-// create soul shop buttons
+// create soul shop container
 const shopHeading = document.createElement("h3");
 shopHeading.textContent = "Soul Shop (Permanent Perks)";
 shopHeading.style.marginBottom = "5px";
@@ -405,7 +453,6 @@ for (let i = 0; i < soulPerks.length; i++) {
   const perk = soulPerks[i];
   const button = document.createElement("button");
   button.id = `perk-${i}`;
-  button.style.padding = "6px";
   button.style.textAlign = "left";
 
   button.addEventListener("click", () => {
@@ -416,8 +463,10 @@ for (let i = 0; i < soulPerks.length; i++) {
       updateUI();
     }
   });
+
   perksContainer.append(button);
 }
+
 app.append(
   heading,
   image,
@@ -435,7 +484,7 @@ app.append(
 
 function updateUI() {
   counterDisplay.textContent = `${Math.floor(numTiles)} Ores`;
-  rateDisplay.textContent = `${growthRate} Ores/sec`;
+  rateDisplay.textContent = `${getEffectiveIdleRate().toFixed(1)} Ores/sec`;
   soulDisplay.textContent =
     `Souls: ${souls} | Reincarnations: ${reincarnationCount}`;
   classDisplay.textContent =
@@ -448,9 +497,11 @@ function updateUI() {
     }`;
   reincarnateButton.disabled = totalOreThisLife < 1000;
 
-  //pick the highest ore tier unlocked by current rate
-  const ore = ores.findLast((ore) =>
-    growthRate >= ore.minRate || numTiles >= ore.minRate * 5
+  // pick the highest ore tier unlocked by current rate, ores mined, or Deep Knowledge perk
+  const bonusRate = soulPerks[4].level * 5;
+  const ore = ores.findLast(
+    (ore) =>
+      growthRate + bonusRate >= ore.minRate || numTiles >= ore.minRate * 5,
   )!;
   image.src = ore.url;
   image.alt = `A ${ore.name} ore`;
@@ -487,6 +538,7 @@ function updateUI() {
     const perk = soulPerks[i];
     const cost = calculatePerkCost(perk);
     const button = document.getElementById(`perk-${i}`) as HTMLButtonElement;
+
     if (button) {
       button.textContent =
         `Buy ${perk.name} (Lvl: ${perk.level}) | cost: ${cost} Souls | ${perk.description}`;
@@ -502,7 +554,7 @@ function gameLoop(timestamp: number) {
 
   const effectiveRate = getEffectiveIdleRate();
   if (effectiveRate > 0) {
-    const gained = growthRate * deltaSeconds;
+    const gained = effectiveRate * deltaSeconds;
     numTiles += gained;
     totalOreThisLife += gained;
     updateUI();
