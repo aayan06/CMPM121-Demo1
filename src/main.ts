@@ -13,6 +13,9 @@ import rubyUrl from "./assets/ruby.png?no-inline";
 
 // example theme of the game (Magic Tiles)
 let numTiles: number = 0;
+let totalOreThisLife: number = 0;
+let souls: number = 0;
+let reincarnationCount: number = 0;
 let growthRate: number = 0;
 let lastTime: number = performance.now();
 
@@ -99,6 +102,8 @@ image.src = stoneUrl;
 image.alt = "A grey stone ore";
 image.width = 96;
 image.height = 96;
+image.style.cursor = "pointer";
+image.style.userSelect = "none";
 
 // add image as a button
 image.addEventListener("click", () => {
@@ -122,6 +127,11 @@ function calculateCost(item: Item): number {
   return item.baseCost * Math.pow(1.15, item.owned);
 }
 
+// fucntion for getting souls on reincarnation
+function calculatePendingSouls(): number {
+  return Math.floor(Math.sqrt(totalOreThisLife / 1000));
+}
+
 // a loop for upgrade logic
 for (let i = 0; i < availableItems.length; i++) {
   const item = availableItems[i];
@@ -143,17 +153,45 @@ for (let i = 0; i < availableItems.length; i++) {
   upgradesContainer.append(button);
 }
 
+// reincarnate button
+const reincarnateButton = document.createElement("button");
+reincarnateButton.style.marginTop = "20px";
+reincarnateButton.style.padding = "10px";
+
+reincarnateButton.addEventListener("click", () => {
+  const pendingSouls = calculatePendingSouls();
+  souls += pendingSouls;
+  reincarnationCount++;
+
+  // reset the progress
+  numTiles = 0;
+  totalOreThisLife = 0;
+  growthRate = 0;
+  for (let i = 0; i < availableItems.length; i++) {
+    availableItems[i].owned = 0;
+  }
+  updateUI();
+});
+
 app.append(
   heading,
   image,
   counterDisplay,
   rateDisplay,
   upgradesContainer,
+  reincarnateButton,
 );
 
 function updateUI() {
   counterDisplay.textContent = `${Math.floor(numTiles)} Ores`;
   rateDisplay.textContent = `${growthRate} Ores/sec`;
+
+  const pendingSouls = calculatePendingSouls();
+  reincarnateButton.textContent =
+    `Reincarnate (+${pendingSouls} Souls) - Mined this life: ${
+      Math.floor(totalOreThisLife)
+    }`;
+  reincarnateButton.disabled = totalOreThisLife < 1000;
 
   //pick the highest ore tier unlocked by current rate
   const ore = ores.findLast((ore) =>
@@ -183,7 +221,9 @@ function gameLoop(timestamp: number) {
   lastTime = timestamp;
 
   if (growthRate > 0) {
-    numTiles += growthRate * deltaSeconds;
+    const gained = growthRate * deltaSeconds;
+    numTiles += gained;
+    totalOreThisLife += gained;
     updateUI();
   }
 
