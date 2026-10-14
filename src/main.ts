@@ -27,9 +27,9 @@ interface Ore {
 
 const ores: Ore[] = [
   { name: "stone", minRate: 0, url: stoneUrl },
-  { name: "iron", minRate: 5, url: ironUrl },
-  { name: "diamond", minRate: 10, url: diamondUrl },
-  { name: "ruby", minRate: 15, url: rubyUrl },
+  { name: "iron", minRate: 50, url: ironUrl },
+  { name: "diamond", minRate: 100, url: diamondUrl },
+  { name: "ruby", minRate: 200, url: rubyUrl },
 ];
 
 interface Item {
@@ -64,6 +64,122 @@ const availableItems: Item[] = [
   },
 ];
 
+interface PickaxeClass {
+  name: string;
+  upside: string;
+  downside: string;
+  unlockReincarnations: number;
+  clickMult: number;
+  idleMult: number;
+  rareChance: number;
+  critChance: number;
+  soulMult: number;
+}
+
+const pickaxeClasses: PickaxeClass[] = [
+  {
+    name: "Rusty Pickaxe",
+    upside: "Baseline",
+    downside: "None",
+    unlockReincarnations: 0,
+    clickMult: 1,
+    idleMult: 1,
+    rareChance: 0,
+    critChance: 0,
+    soulMult: 1,
+  },
+  {
+    name: "Cooper Pick",
+    upside: "+50% click yield",
+    downside: "-10% idle production",
+    unlockReincarnations: 1,
+    clickMult: 1.5,
+    idleMult: 0.9,
+    rareChance: 0,
+    critChance: 0,
+    soulMult: 1,
+  },
+  {
+    name: "Speed Hammer",
+    upside: "+100% click rate",
+    downside: "-30% yield/click",
+    unlockReincarnations: 2,
+    clickMult: 1.4,
+    idleMult: 1,
+    rareChance: 0,
+    critChance: 0,
+    soulMult: 1,
+  },
+  {
+    name: "Heavy Maul",
+    upside: "+200% yield/click",
+    downside: "-50% click rate",
+    unlockReincarnations: 3,
+    clickMult: 3.0,
+    idleMult: 0.8,
+    rareChance: 0,
+    critChance: 0,
+    soulMult: 1,
+  },
+  {
+    name: "Prospector's Pick",
+    upside: "+20% rare ore chance (x10 value)",
+    downside: "-15% base yield",
+    unlockReincarnations: 5,
+    clickMult: 0.85,
+    idleMult: 0.85,
+    rareChance: 0.2,
+    critChance: 0,
+    soulMult: 1,
+  },
+  {
+    name: "Auto-Digger Rig",
+    upside: "+100% idle production",
+    downside: "-50% click yield",
+    unlockReincarnations: 8,
+    clickMult: 0.5,
+    idleMult: 2.0,
+    rareChance: 0,
+    critChance: 0,
+    soulMult: 1,
+  },
+  {
+    name: "Gambler's Pick",
+    upside: "10% crit for x25",
+    downside: "-30% yield otherwise",
+    unlockReincarnations: 12,
+    clickMult: 0.7,
+    idleMult: 0.7,
+    rareChance: 0,
+    critChance: 0.1,
+    soulMult: 1,
+  },
+  {
+    name: "Soul-Touched Pick",
+    upside: "+50% Souls on reincarnate",
+    downside: "-25% mining speed",
+    unlockReincarnations: 15,
+    clickMult: 0.75,
+    idleMult: 0.75,
+    rareChance: 0,
+    critChance: 0,
+    soulMult: 1.5,
+  },
+  {
+    name: "Diamond Pickaxe",
+    upside: "+300% to everything",
+    downside: "None",
+    unlockReincarnations: 25,
+    clickMult: 4.0,
+    idleMult: 4.0,
+    rareChance: 0,
+    critChance: 0,
+    soulMult: 4.0,
+  },
+];
+
+let currentClass: PickaxeClass = pickaxeClasses[0];
+
 function spawnFallingOre(url: string) {
   const ore = document.createElement("img");
   ore.src = url;
@@ -93,6 +209,14 @@ counterDisplay.textContent = "0 Ores";
 const rateDisplay = document.createElement("div");
 rateDisplay.textContent = "0 Ores/sec";
 
+// soul and reincarnation UI
+const soulDisplay = document.createElement("div");
+soulDisplay.style.marginTop = "5px";
+soulDisplay.style.fontWeight = "bold";
+
+const classDisplay = document.createElement("div");
+classDisplay.style.marginTop = "5px";
+
 // display title
 const heading = document.createElement("h1");
 heading.textContent = "Mining Clicker";
@@ -105,9 +229,26 @@ image.height = 96;
 image.style.cursor = "pointer";
 image.style.userSelect = "none";
 
+function getCLickYield(): number {
+  let amount = 1 * currentClass.clickMult;
+  if (Math.random() < currentClass.rareChance) {
+    amount *= 10;
+  }
+  if (Math.random() < currentClass.critChance) {
+    amount *= 25;
+  }
+  return amount;
+}
+
+function getEffectiveIdleRate(): number {
+  return growthRate * currentClass.idleMult;
+}
+
 // add image as a button
 image.addEventListener("click", () => {
-  numTiles++;
+  const gained = getCLickYield();
+  numTiles += gained;
+  totalOreThisLife += gained;
   spawnFallingOre(image.src);
   image.animate([{ transform: "scale(1)" }, { transform: "scale(0.9)" }, {
     transform: "scale(1)",
@@ -173,18 +314,52 @@ reincarnateButton.addEventListener("click", () => {
   updateUI();
 });
 
+// pickaxe class selection containers
+const classesHeading = document.createElement("h3");
+classesHeading.textContent = "Pickaxe Classes";
+classesHeading.style.marginBottom = "5px";
+
+const classesContainer = document.createElement("div");
+classesContainer.style.display = "flex";
+classesContainer.style.flexDirection = "column";
+classesContainer.style.gap = "6px";
+
+for (let i = 0; i < pickaxeClasses.length; i++) {
+  const pickClass = pickaxeClasses[i];
+  const button = document.createElement("button");
+  button.id = `class-${i}`;
+  button.style.padding = "6px";
+  button.style.textAlign = "left";
+
+  button.addEventListener("click", () => {
+    if (reincarnationCount >= pickClass.unlockReincarnations) {
+      currentClass = pickClass;
+      updateUI();
+    }
+  });
+  classesContainer.append(button);
+}
+
 app.append(
   heading,
   image,
   counterDisplay,
   rateDisplay,
+  soulDisplay,
+  classDisplay,
   upgradesContainer,
   reincarnateButton,
+  classesHeading,
+  classesContainer,
 );
 
 function updateUI() {
   counterDisplay.textContent = `${Math.floor(numTiles)} Ores`;
   rateDisplay.textContent = `${growthRate} Ores/sec`;
+  soulDisplay.textContent =
+    `Souls: ${souls} | Reincarnations: ${reincarnationCount}`;
+  classDisplay.textContent =
+    `Equipped Class: ${currentClass.name} (${currentClass.upside}, ${currentClass.downside})`;
 
   const pendingSouls = calculatePendingSouls();
   reincarnateButton.textContent =
@@ -213,6 +388,19 @@ function updateUI() {
       button.disabled = numTiles < currentCost;
     }
   }
+
+  // update pickaxe class buttons
+  for (let i = 0; i < pickaxeClasses.length; i++) {
+    const pickClass = pickaxeClasses[i];
+    const button = document.getElementById(`class-${i}`) as HTMLButtonElement;
+    const unlocked = reincarnationCount >= pickClass.unlockReincarnations;
+
+    if (button) {
+      button.textContent =
+        `${pickClass.name} | Upside: ${pickClass.upside} | Downside: ${pickClass.downside} (Req: ${pickClass.unlockReincarnations} Reincarnations)`;
+      button.disabled = !unlocked || currentClass.name === pickClass.name;
+    }
+  }
 }
 
 // created timed growth using animation frames and time spent
@@ -220,7 +408,8 @@ function gameLoop(timestamp: number) {
   const deltaSeconds = (timestamp - lastTime) / 1000;
   lastTime = timestamp;
 
-  if (growthRate > 0) {
+  const effectiveRate = getEffectiveIdleRate();
+  if (effectiveRate > 0) {
     const gained = growthRate * deltaSeconds;
     numTiles += gained;
     totalOreThisLife += gained;
