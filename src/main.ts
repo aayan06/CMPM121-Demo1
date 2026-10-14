@@ -219,12 +219,12 @@ const soulPerks: SoulPerk[] = [
   },
 ];
 
-// Add dark cave theme and button styles
+// Global theme & 3-column dashboard styles
 const style = document.createElement("style");
 style.textContent = `
   body {
     margin: 0;
-    background-color: #020202;
+    background-color: #000000;
     color: #ffffff;
     font-family: system-ui, -apple-system, sans-serif;
   }
@@ -232,18 +232,18 @@ style.textContent = `
     image-rendering: pixelated;
   }
   button {
-    background-color: #1f242d;
+    background-color: #000000;
     color: #ffffff;
-    border: 1px solid #404142;
+    border: 1px solid #292a2b;
     border-radius: 8px;
     padding: 10px 14px;
-    font-size: 14px;
+    font-size: 13px;
     cursor: pointer;
     transition: background-color 0.15s, border-color 0.15s, transform 0.05s;
   }
   button:hover:not(:disabled) {
     background-color: #2b323f;
-    border-color: #345379;
+    border-color: #277ec4;
   }
   button:active:not(:disabled) {
     transform: scale(0.98);
@@ -251,6 +251,29 @@ style.textContent = `
   button:disabled {
     opacity: 0.45;
     cursor: not-allowed;
+  }
+  .dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+    max-width: 1300px;
+    padding: 0 20px;
+    box-sizing: border-box;
+    align-items: start;
+  }
+  .panel {
+    background-color: #181b20;
+    border: 1px solid #262b35;
+    border-radius: 12px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+  }
+  @media (max-width: 950px) {
+    .dashboard {
+      grid-template-columns: 1fr;
+    }
   }
 `;
 document.head.append(style);
@@ -274,14 +297,13 @@ const app = document.querySelector<HTMLElement>("#app")!;
 app.style.display = "flex";
 app.style.flexDirection = "column";
 app.style.alignItems = "center";
-app.style.justifyContent = "center";
 app.style.paddingBottom = "40px";
 
 // create counter, rate, and prestige displays
 const counterDisplay = document.createElement("div");
 counterDisplay.style.fontSize = "28px";
 counterDisplay.style.fontWeight = "bold";
-counterDisplay.style.color = "#ee5e0b";
+counterDisplay.style.color = "#ff3300";
 counterDisplay.style.margin = "10px 0 4px 0";
 counterDisplay.textContent = "0 Ores";
 
@@ -292,22 +314,24 @@ rateDisplay.textContent = "0 Ores/sec";
 const soulDisplay = document.createElement("div");
 soulDisplay.style.marginTop = "8px";
 soulDisplay.style.fontWeight = "bold";
-soulDisplay.style.color = "#219db3";
+soulDisplay.style.color = "#277ec4";
 
 const classDisplay = document.createElement("div");
 classDisplay.style.marginTop = "5px";
 classDisplay.style.color = "#d1d5db";
+classDisplay.style.textAlign = "center";
 
 // display title
 const heading = document.createElement("h1");
 heading.textContent = "Mining Clicker";
+heading.style.margin = "20px 0";
 
 // make the ore image act as the clickable button
 const image = document.createElement("img");
 image.src = stoneUrl;
 image.alt = "A grey stone ore";
-image.width = 112;
-image.height = 112;
+image.width = 120;
+image.height = 120;
 image.style.cursor = "pointer";
 image.style.userSelect = "none";
 
@@ -346,11 +370,14 @@ image.addEventListener("click", () => {
 });
 
 // create upgrade boxes
+const upgradesHeading = document.createElement("h3");
+upgradesHeading.textContent = "Mining Upgrades";
+upgradesHeading.style.marginTop = "0";
+
 const upgradesContainer = document.createElement("div");
 upgradesContainer.style.display = "flex";
 upgradesContainer.style.flexDirection = "column";
 upgradesContainer.style.gap = "10px";
-upgradesContainer.style.marginTop = "20px";
 
 // function for evolving costs
 function calculateCost(item: Item): number {
@@ -392,7 +419,8 @@ for (let i = 0; i < availableItems.length; i++) {
 // create reincarnate button
 const reincarnateButton = document.createElement("button");
 reincarnateButton.style.marginTop = "20px";
-reincarnateButton.style.borderColor = "#219db3";
+reincarnateButton.style.borderColor = "#277ec4";
+reincarnateButton.style.width = "100%";
 
 reincarnateButton.addEventListener("click", () => {
   const pendingSouls = calculatePendingSouls();
@@ -416,7 +444,8 @@ reincarnateButton.addEventListener("click", () => {
 // create pickaxe class selection container
 const classesHeading = document.createElement("h3");
 classesHeading.textContent = "Pickaxe Classes";
-classesHeading.style.marginBottom = "5px";
+classesHeading.style.marginTop = "20px";
+classesHeading.style.marginBottom = "10px";
 
 const classesContainer = document.createElement("div");
 classesContainer.style.display = "flex";
@@ -442,7 +471,8 @@ for (let i = 0; i < pickaxeClasses.length; i++) {
 // create soul shop container
 const shopHeading = document.createElement("h3");
 shopHeading.textContent = "Soul Shop (Permanent Perks)";
-shopHeading.style.marginBottom = "5px";
+shopHeading.style.marginTop = "0";
+shopHeading.style.marginBottom = "10px";
 
 const perksContainer = document.createElement("div");
 perksContainer.style.display = "flex";
@@ -467,20 +497,36 @@ for (let i = 0; i < soulPerks.length; i++) {
   perksContainer.append(button);
 }
 
-app.append(
-  heading,
+const dashboard = document.createElement("div");
+dashboard.className = "dashboard";
+
+const leftPanel = document.createElement("div");
+leftPanel.className = "panel";
+leftPanel.append(
+  upgradesHeading,
+  upgradesContainer,
+  classesHeading,
+  classesContainer,
+);
+
+const centerPanel = document.createElement("div");
+centerPanel.className = "panel";
+centerPanel.style.alignItems = "center";
+centerPanel.append(
   image,
   counterDisplay,
   rateDisplay,
   soulDisplay,
   classDisplay,
-  upgradesContainer,
   reincarnateButton,
-  classesHeading,
-  classesContainer,
-  shopHeading,
-  perksContainer,
 );
+
+const rightPanel = document.createElement("div");
+rightPanel.className = "panel";
+rightPanel.append(shopHeading, perksContainer);
+
+dashboard.append(leftPanel, centerPanel, rightPanel);
+app.append(heading, dashboard);
 
 function updateUI() {
   counterDisplay.textContent = `${Math.floor(numTiles)} Ores`;
