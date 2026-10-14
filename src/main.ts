@@ -61,6 +61,19 @@ const availableItems: Item[] = [
   },
 ];
 
+function spawnFallingOre(url: string) {
+  const ore = document.createElement("img");
+  ore.src = url;
+  ore.width = 48;
+  ore.style.position = "fixed";
+  ore.style.left = `${Math.random() * 90}vw`;
+  document.body.append(ore);
+
+  ore.animate([{ top: "0" }, { top: "100vh" }], 3000).onfinish = () => {
+    ore.remove();
+  };
+}
+
 const app = document.querySelector<HTMLElement>("#app")!;
 
 app.style.display = "flex";
@@ -96,6 +109,7 @@ clickButton.style.margin = "10px 0";
 
 clickButton.addEventListener("click", () => {
   numTiles++;
+  spawnFallingOre(image.src);
   updateUI();
 });
 
