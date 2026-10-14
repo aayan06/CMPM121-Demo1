@@ -449,7 +449,6 @@ function updateUI() {
   reincarnateButton.disabled = totalOreThisLife < 1000;
 
   //pick the highest ore tier unlocked by current rate
-  const bonusRate = soulPerks[4].level * 5;
   const ore = ores.findLast((ore) =>
     growthRate >= ore.minRate || numTiles >= ore.minRate * 5
   )!;
