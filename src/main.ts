@@ -8,6 +8,7 @@ import ironUrl from "./assets/iron.png?no-inline";
 import diamondUrl from "./assets/diamond.png?no-inline";
 // @deno-types="./asset-url.d.ts"
 import rubyUrl from "./assets/ruby.png?no-inline";
+import mineUrl from "./assets/Stone_dig1.ogg?no-inline";
 
 // all variables & databases
 
@@ -347,6 +348,8 @@ image.addEventListener("click", (event: MouseEvent) => {
   const gained = getClickYield();
   numTiles += gained;
   totalOreThisLife += gained;
+  const mineSound = new Audio(mineUrl);
+  mineSound.play();
   spawnFallingOre(image.src);
   spawnFloatingText(event.clientX, event.clientY, `+${gained.toFixed(1)}`);
   image.animate(
