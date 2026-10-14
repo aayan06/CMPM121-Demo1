@@ -100,16 +100,13 @@ image.alt = "A grey stone ore";
 image.width = 96;
 image.height = 96;
 
-// create a button
-const clickButton = document.createElement("button");
-clickButton.textContent = "Mine";
-clickButton.style.padding = "10px";
-clickButton.style.fontSize = "18px";
-clickButton.style.margin = "10px 0";
-
-clickButton.addEventListener("click", () => {
+// add image as a button
+image.addEventListener("click", () => {
   numTiles++;
   spawnFallingOre(image.src);
+  image.animate([{ transform: "scale(1)" }, { transform: "scale(0.9)" }, {
+    transform: "scale(1)",
+  }], 100);
   updateUI();
 });
 
@@ -151,7 +148,6 @@ app.append(
   image,
   counterDisplay,
   rateDisplay,
-  clickButton,
   upgradesContainer,
 );
 
@@ -160,7 +156,9 @@ function updateUI() {
   rateDisplay.textContent = `${growthRate} Ores/sec`;
 
   //pick the highest ore tier unlocked by current rate
-  const ore = ores.findLast((ore) => growthRate >= ore.minRate)!;
+  const ore = ores.findLast((ore) =>
+    growthRate >= ore.minRate || numTiles >= ore.minRate * 5
+  )!;
   image.src = ore.url;
   image.alt = `A ${ore.name} ore`;
 
